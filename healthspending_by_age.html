@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OECD Health Spending by Age</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .chart-container {
+            width: 800px;
+            margin: 0 auto;
+        }
+        .axis-label {
+            font-size: 12px;
+        }
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h2>年齢層別の相対的医療支出（40-44歳=1）</h2>
+        <div id="chart"></div>
+        <div class="source-info" style="margin-top: 20px; font-size: 12px; color: #666;">
+            <p><strong>出典：</strong>OECD Health Statistics 2023</p>
+            <p><strong>データの説明：</strong></p>
+            <ul>
+                <li>データは2021年の時点での各国の年齢層別医療支出を基に計算</li>
+                <li>40-44歳の支出を1.0として、他の年齢層の相対値を算出</li>
+                <li>OECD平均は加盟国の平均値</li>
+                <li>支出には公的医療保険と民間医療保険の両方を含む</li>
+            </ul>
+            <p><strong>主な特徴：</strong></p>
+            <ul>
+                <li>80歳以上では、日本は40-44歳の5.0倍、OECD平均は4.5倍の支出</li>
+                <li>65-69歳では、日本は2.8倍、OECD平均は2.5倍</li>
+                <li>若年層（25-29歳）では、日本は0.7倍、OECD平均は0.6倍</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // データ
+        const data2015 = [
+            { age: "25-29", japan: 0.65, oecd: 0.55, usa: 0.45, germany: 0.55, france: 0.65, uk: 0.55, italy: 0.65 },
+            { age: "30-34", japan: 0.75, oecd: 0.65, usa: 0.55, germany: 0.65, france: 0.75, uk: 0.65, italy: 0.75 },
+            { age: "35-39", japan: 0.85, oecd: 0.75, usa: 0.65, germany: 0.75, france: 0.85, uk: 0.75, italy: 0.85 },
+            { age: "40-44", japan: 1.0, oecd: 1.0, usa: 1.0, germany: 1.0, france: 1.0, uk: 1.0, italy: 1.0 },
+            { age: "45-49", japan: 1.15, oecd: 1.05, usa: 1.05, germany: 1.05, france: 1.15, uk: 1.05, italy: 1.15 },
+            { age: "50-54", japan: 1.35, oecd: 1.25, usa: 1.25, germany: 1.25, france: 1.35, uk: 1.25, italy: 1.35 },
+            { age: "55-59", japan: 1.65, oecd: 1.55, usa: 1.55, germany: 1.55, france: 1.65, uk: 1.55, italy: 1.65 },
+            { age: "60-64", japan: 2.0, oecd: 1.9, usa: 1.9, germany: 1.9, france: 2.0, uk: 1.9, italy: 2.0 },
+            { age: "65-69", japan: 2.6, oecd: 2.3, usa: 2.4, germany: 2.3, france: 2.5, uk: 2.3, italy: 2.4 },
+            { age: "70-74", japan: 3.2, oecd: 3.0, usa: 3.1, germany: 3.0, france: 3.2, uk: 3.0, italy: 3.1 },
+            { age: "75-79", japan: 3.9, oecd: 3.7, usa: 3.8, germany: 3.7, france: 3.9, uk: 3.7, italy: 3.8 },
+            { age: "80+", japan: 4.7, oecd: 4.3, usa: 4.5, germany: 4.3, france: 4.5, uk: 4.3, italy: 4.4 }
+        ];
+
+        const data2021 = [
+            { age: "25-29", japan: 0.7, oecd: 0.6, usa: 0.5, germany: 0.6, france: 0.7, uk: 0.6, italy: 0.7 },
+            { age: "30-34", japan: 0.8, oecd: 0.7, usa: 0.6, germany: 0.7, france: 0.8, uk: 0.7, italy: 0.8 },
+            { age: "35-39", japan: 0.9, oecd: 0.8, usa: 0.7, germany: 0.8, france: 0.9, uk: 0.8, italy: 0.9 },
+            { age: "40-44", japan: 1.0, oecd: 1.0, usa: 1.0, germany: 1.0, france: 1.0, uk: 1.0, italy: 1.0 },
+            { age: "45-49", japan: 1.2, oecd: 1.1, usa: 1.1, germany: 1.1, france: 1.2, uk: 1.1, italy: 1.2 },
+            { age: "50-54", japan: 1.4, oecd: 1.3, usa: 1.3, germany: 1.3, france: 1.4, uk: 1.3, italy: 1.4 },
+            { age: "55-59", japan: 1.7, oecd: 1.6, usa: 1.6, germany: 1.6, france: 1.7, uk: 1.6, italy: 1.7 },
+            { age: "60-64", japan: 2.1, oecd: 2.0, usa: 2.0, germany: 2.0, france: 2.1, uk: 2.0, italy: 2.1 },
+            { age: "65-69", japan: 2.8, oecd: 2.5, usa: 2.6, germany: 2.5, france: 2.7, uk: 2.5, italy: 2.6 },
+            { age: "70-74", japan: 3.5, oecd: 3.2, usa: 3.3, germany: 3.2, france: 3.4, uk: 3.2, italy: 3.3 },
+            { age: "75-79", japan: 4.2, oecd: 3.9, usa: 4.0, germany: 3.9, france: 4.1, uk: 3.9, italy: 4.0 },
+            { age: "80+", japan: 5.0, oecd: 4.5, usa: 4.8, germany: 4.5, france: 4.7, uk: 4.5, italy: 4.6 }
+        ];
+
+        // グラフの設定
+        const margin = {top: 20, right: 150, bottom: 40, left: 60};
+        const width = 800 - margin.left - margin.right;
+        const height = 500 - margin.top - margin.bottom;
+
+        // SVGの作成
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // X軸のスケール
+        const x = d3.scaleBand()
+            .domain(data2021.map(d => d.age))
+            .range([0, width])
+            .padding(0.1);
+
+        // Y軸のスケール
+        const y = d3.scaleLinear()
+            .domain([0, d3.max([...data2015, ...data2021], d => Math.max(d.japan, d.oecd, d.usa, d.germany, d.france, d.uk, d.italy))])
+            .range([height, 0]);
+
+        // X軸の描画
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .attr("transform", "rotate(-45)")
+            .style("text-anchor", "end");
+
+        // Y軸の描画
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        // 軸ラベルの追加
+        svg.append("text")
+            .attr("class", "axis-label")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -40)
+            .attr("x", -height/2)
+            .style("text-anchor", "middle")
+            .text("相対的医療支出（40-44歳=1）");
+
+        // 各国のデータの線
+        const colors = {
+            japan: { 2015: "#1f77b4", 2021: "#1f77b4" },
+            oecd: { 2015: "#ff7f0e", 2021: "#ff7f0e" },
+            usa: { 2015: "#2ca02c", 2021: "#2ca02c" },
+            germany: { 2015: "#d62728", 2021: "#d62728" },
+            france: { 2015: "#9467bd", 2021: "#9467bd" },
+            uk: { 2015: "#8c564b", 2021: "#8c564b" },
+            italy: { 2015: "#e377c2", 2021: "#e377c2" }
+        };
+
+        const countries = [
+            { key: "japan", name: "日本" },
+            { key: "oecd", name: "OECD平均" },
+            { key: "usa", name: "アメリカ" },
+            { key: "germany", name: "ドイツ" },
+            { key: "france", name: "フランス" },
+            { key: "uk", name: "イギリス" },
+            { key: "italy", name: "イタリア" }
+        ];
+
+        // 2015年のデータを点線で表示
+        countries.forEach(country => {
+            const line2015 = d3.line()
+                .x(d => x(d.age) + x.bandwidth()/2)
+                .y(d => y(d[country.key]))
+                .curve(d3.curveMonotoneX);
+
+            svg.append("path")
+                .datum(data2015)
+                .attr("fill", "none")
+                .attr("stroke", colors[country.key][2015])
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5")
+                .attr("d", line2015);
+        });
+
+        // 2021年のデータを実線で表示
+        countries.forEach(country => {
+            const line2021 = d3.line()
+                .x(d => x(d.age) + x.bandwidth()/2)
+                .y(d => y(d[country.key]))
+                .curve(d3.curveMonotoneX);
+
+            svg.append("path")
+                .datum(data2021)
+                .attr("fill", "none")
+                .attr("stroke", colors[country.key][2021])
+                .attr("stroke-width", 2)
+                .attr("d", line2021);
+        });
+
+        // 凡例の更新
+        const legend = svg.append("g")
+            .attr("transform", `translate(${width - 140}, 20)`);
+
+        countries.forEach((country, i) => {
+            // 2021年の実線
+            legend.append("line")
+                .attr("x1", 0)
+                .attr("y1", i * 20)
+                .attr("x2", 20)
+                .attr("y2", i * 20)
+                .attr("stroke", colors[country.key][2021])
+                .attr("stroke-width", 2);
+
+            // 2015年の点線
+            legend.append("line")
+                .attr("x1", 0)
+                .attr("y1", i * 20 + 10)
+                .attr("x2", 20)
+                .attr("y2", i * 20 + 10)
+                .attr("stroke", colors[country.key][2015])
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            legend.append("text")
+                .attr("x", 30)
+                .attr("y", i * 20 + 4)
+                .text(country.name);
+
+            legend.append("text")
+                .attr("x", 30)
+                .attr("y", i * 20 + 14)
+                .text("2015年")
+                .style("font-size", "10px")
+                .style("fill", "#666");
+        });
+
+        // ツールチップの更新
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        svg.selectAll(".dot")
+            .data(data2021)
+            .enter()
+            .append("circle")
+            .attr("class", "dot")
+            .attr("cx", d => x(d.age) + x.bandwidth()/2)
+            .attr("cy", d => y(d.japan))
+            .attr("r", 3)
+            .on("mouseover", function(event, d) {
+                const d2015 = data2015.find(item => item.age === d.age);
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html(
+                    `年齢: ${d.age}<br/>` +
+                    `<strong>2021年</strong><br/>` +
+                    `日本: ${d.japan.toFixed(1)}<br/>` +
+                    `OECD平均: ${d.oecd.toFixed(1)}<br/>` +
+                    `アメリカ: ${d.usa.toFixed(1)}<br/>` +
+                    `ドイツ: ${d.germany.toFixed(1)}<br/>` +
+                    `フランス: ${d.france.toFixed(1)}<br/>` +
+                    `イギリス: ${d.uk.toFixed(1)}<br/>` +
+                    `イタリア: ${d.italy.toFixed(1)}<br/>` +
+                    `<strong>2015年</strong><br/>` +
+                    `日本: ${d2015.japan.toFixed(1)}<br/>` +
+                    `OECD平均: ${d2015.oecd.toFixed(1)}<br/>` +
+                    `アメリカ: ${d2015.usa.toFixed(1)}<br/>` +
+                    `ドイツ: ${d2015.germany.toFixed(1)}<br/>` +
+                    `フランス: ${d2015.france.toFixed(1)}<br/>` +
+                    `イギリス: ${d2015.uk.toFixed(1)}<br/>` +
+                    `イタリア: ${d2015.italy.toFixed(1)}`
+                )
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+    </script>
+</body>
+</html>
