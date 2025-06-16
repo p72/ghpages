@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokyo 3D Flight Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8E8 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        #speed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            z-index: 100;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ui">
+            <div>高度: <span id="altitude">100m</span></div>
+            <div>東京上空を飛行中...</div>
+        </div>
+        
+        <div id="speed">
+            速度: <span id="speedValue">0</span> km/h
+        </div>
+        
+        <div id="controls">
+            <div><strong>操作方法:</strong></div>
+            <div>W/S: 上昇/下降</div>
+            <div>A/D: 左右旋回</div>
+            <div>↑/↓: 前進/後退</div>
+            <div>←/→: 左右移動</div>
+            <div>マウス: 視点操作</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, airplane;
+        let buildings = [];
+        let keys = {};
+        let velocity = new THREE.Vector3();
+        let speed = 0;
+        
+        // キーボード入力の設定
+        document.addEventListener('keydown', (event) => {
+            keys[event.code] = true;
+        });
+        
+        document.addEventListener('keyup', (event) => {
+            keys[event.code] = false;
+        });
+        
+        function init() {
+            // シーンの作成
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x87CEEB, 500, 2000);
+            
+            // カメラの作成
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
+            camera.position.set(0, 100, 0);
+            
+            // レンダラーの作成
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x87CEEB);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+            
+            // 光源の設定
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(100, 200, 100);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // 飛行機の作成
+            createAirplane();
+            
+            // 東京の街を作成
+            createTokyoCity();
+            
+            // 地面の作成
+            createGround();
+            
+            // アニメーションループ開始
+            animate();
+        }
+        
+        function createAirplane() {
+            const airplaneGroup = new THREE.Group();
+            
+            // 機体（胴体）
+            const fuselageGeometry = new THREE.CylinderGeometry(2, 4, 20, 8);
+            const fuselageMaterial = new THREE.MeshLambertMaterial({ color: 0x0066cc });
+            const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+            fuselage.rotation.z = Math.PI / 2;
+            airplaneGroup.add(fuselage);
+            
+            // 主翼
+            const wingGeometry = new THREE.BoxGeometry(40, 2, 8);
+            const wingMaterial = new THREE.MeshLambertMaterial({ color: 0x004499 });
+            const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+            wings.position.z = -2;
+            airplaneGroup.add(wings);
+            
+            // 尾翼
+            const tailGeometry = new THREE.BoxGeometry(8, 8, 2);
+            const tailMaterial = new THREE.MeshLambertMaterial({ color: 0x004499 });
+            const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+            tail.position.x = -12;
+            tail.position.y = 2;
+            airplaneGroup.add(tail);
+            
+            // プロペラ
+            const propGeometry = new THREE.BoxGeometry(1, 12, 0.5);
+            const propMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+            const propeller = new THREE.Mesh(propGeometry, propMaterial);
+            propeller.position.x = 12;
+            airplaneGroup.add(propeller);
+            
+            airplane = airplaneGroup;
+            airplane.position.set(0, 100, 0);
+            scene.add(airplane);
+            
+            // カメラを飛行機の後ろに配置
+            camera.position.set(-50, 120, 0);
+            camera.lookAt(airplane.position);
+        }
+        
+        function createTokyoCity() {
+            const buildingMaterials = [
+                new THREE.MeshLambertMaterial({ color: 0x666666 }),
+                new THREE.MeshLambertMaterial({ color: 0x888888 }),
+                new THREE.MeshLambertMaterial({ color: 0x555555 }),
+                new THREE.MeshLambertMaterial({ color: 0x777777 })
+            ];
+            
+            // 高層ビル群を生成
+            for (let i = 0; i < 200; i++) {
+                const width = Math.random() * 20 + 10;
+                const height = Math.random() * 150 + 30;
+                const depth = Math.random() * 20 + 10;
+                
+                const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                const buildingMaterial = buildingMaterials[Math.floor(Math.random() * buildingMaterials.length)];
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                
+                // ビルの配置（格子状＋ランダム）
+                const gridX = (i % 20) * 60 - 600;
+                const gridZ = Math.floor(i / 20) * 60 - 300;
+                
+                building.position.set(
+                    gridX + (Math.random() - 0.5) * 30,
+                    height / 2,
+                    gridZ + (Math.random() - 0.5) * 30
+                );
+                
+                building.castShadow = true;
+                building.receiveShadow = true;
+                
+                // 窓の表現
+                if (Math.random() > 0.3) {
+                    const windowsGeometry = new THREE.BoxGeometry(width + 0.1, height + 0.1, depth + 0.1);
+                    const windowsMaterial = new THREE.MeshLambertMaterial({ 
+                        color: 0x444444,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    const windows = new THREE.Mesh(windowsGeometry, windowsMaterial);
+                    windows.position.copy(building.position);
+                    scene.add(windows);
+                }
+                
+                buildings.push(building);
+                scene.add(building);
+            }
+            
+            // 東京タワー風のランドマーク
+            const towerGeometry = new THREE.ConeGeometry(5, 200, 4);
+            const towerMaterial = new THREE.MeshLambertMaterial({ color: 0xff3333 });
+            const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+            tower.position.set(200, 100, 100);
+            scene.add(tower);
+            
+            // スカイツリー風のランドマーク
+            const skytreeGeometry = new THREE.CylinderGeometry(3, 8, 300, 6);
+            const skytreeMaterial = new THREE.MeshLambertMaterial({ color: 0x4444ff });
+            const skytree = new THREE.Mesh(skytreeGeometry, skytreeMaterial);
+            skytree.position.set(-300, 150, -200);
+            scene.add(skytree);
+        }
+        
+        function createGround() {
+            const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = 0;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // 道路のような線を追加
+            for (let i = -1000; i <= 1000; i += 100) {
+                const roadGeometry = new THREE.PlaneGeometry(2000, 5);
+                const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                const road = new THREE.Mesh(roadGeometry, roadMaterial);
+                road.rotation.x = -Math.PI / 2;
+                road.position.set(i, 0.1, 0);
+                scene.add(road);
+                
+                const road2 = new THREE.Mesh(roadGeometry, roadMaterial);
+                road2.rotation.x = -Math.PI / 2;
+                road2.rotation.z = Math.PI / 2;
+                road2.position.set(0, 0.1, i);
+                scene.add(road2);
+            }
+        }
+        
+        function handleInput() {
+            const acceleration = 0.3;
+            const maxSpeed = 5;
+            const turnSpeed = 0.02;
+            
+            // 前進/後退
+            if (keys['ArrowUp']) {
+                velocity.x += Math.cos(airplane.rotation.y) * acceleration;
+                velocity.z += Math.sin(airplane.rotation.y) * acceleration;
+            }
+            if (keys['ArrowDown']) {
+                velocity.x -= Math.cos(airplane.rotation.y) * acceleration * 0.5;
+                velocity.z -= Math.sin(airplane.rotation.y) * acceleration * 0.5;
+            }
+            
+            // 左右移動
+            if (keys['ArrowLeft']) {
+                velocity.x += Math.cos(airplane.rotation.y + Math.PI/2) * acceleration * 0.7;
+                velocity.z += Math.sin(airplane.rotation.y + Math.PI/2) * acceleration * 0.7;
+            }
+            if (keys['ArrowRight']) {
+                velocity.x -= Math.cos(airplane.rotation.y + Math.PI/2) * acceleration * 0.7;
+                velocity.z -= Math.sin(airplane.rotation.y + Math.PI/2) * acceleration * 0.7;
+            }
+            
+            // 上昇/下降
+            if (keys['KeyW']) {
+                velocity.y += acceleration * 0.8;
+            }
+            if (keys['KeyS']) {
+                velocity.y -= acceleration * 0.8;
+            }
+            
+            // 旋回
+            if (keys['KeyA']) {
+                airplane.rotation.y += turnSpeed;
+                airplane.rotation.z = Math.min(airplane.rotation.z + 0.01, 0.3);
+            }
+            if (keys['KeyD']) {
+                airplane.rotation.y -= turnSpeed;
+                airplane.rotation.z = Math.max(airplane.rotation.z - 0.01, -0.3);
+            }
+            
+            // 傾きを自然に戻す
+            if (!keys['KeyA'] && !keys['KeyD']) {
+                airplane.rotation.z *= 0.95;
+            }
+            
+            // 速度制限と摩擦
+            velocity.multiplyScalar(0.98);
+            velocity.x = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.x));
+            velocity.y = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.y));
+            velocity.z = Math.max(-maxSpeed, Math.min(maxSpeed, velocity.z));
+            
+            // 最低高度の制限
+            if (airplane.position.y < 20) {
+                airplane.position.y = 20;
+                velocity.y = Math.max(0, velocity.y);
+            }
+            
+            // 飛行機の位置更新
+            airplane.position.add(velocity);
+            
+            // 速度計算（表示用）
+            speed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z) * 50;
+        }
+        
+        function updateCamera() {
+            // カメラが飛行機を追従
+            const idealCameraPosition = new THREE.Vector3(
+                airplane.position.x - Math.cos(airplane.rotation.y) * 80,
+                airplane.position.y + 30,
+                airplane.position.z - Math.sin(airplane.rotation.y) * 80
+            );
+            
+            camera.position.lerp(idealCameraPosition, 0.05);
+            camera.lookAt(airplane.position);
+        }
+        
+        function updateUI() {
+            document.getElementById('altitude').textContent = Math.round(airplane.position.y) + 'm';
+            document.getElementById('speedValue').textContent = Math.round(speed);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            handleInput();
+            updateCamera();
+            updateUI();
+            
+            // プロペラの回転
+            if (airplane.children[3]) {
+                airplane.children[3].rotation.x += 0.5;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // ウィンドウリサイズ対応
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // ゲーム開始
+        init();
+    </script>
+</body>
+</html>

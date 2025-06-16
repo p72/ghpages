@@ -35,14 +35,30 @@
             padding: 0;
         }
         .links li {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .links li:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
         }
         .links a {
             color: #0066cc;
             text-decoration: none;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
         }
         .links a:hover {
             text-decoration: underline;
+        }
+        .item-description {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -52,7 +68,36 @@
         <p class="description">医療・健康に関するデータの視覚化コレクションです。各チャートは、データの理解を深め、洞察を得るためのツールとして設計されています。</p>
         
         <ul class="links">
-            <li><a href="health_spending_age_comparison_chart.html">年齢別医療費支出の国際比較</a></li>
+            <li>
+                <a href="health_spending_age_comparison_chart.html">年齢別医療費支出の国際比較</a>
+                <div class="item-description">
+                    OECD諸国における年齢別医療費支出を比較したインタラクティブなチャートです。40-44歳を基準とした相対的な医療費支出倍率を、日本、米国、OECD7カ国平均、ドイツ、英国のデータで可視化しています。高齢化社会における医療費の特徴を理解するのに役立ちます。
+                </div>
+            </li>
+            <li>
+                <a href="social_spending_aging_chart.html">社会支出と高齢化の関係（詳細版）</a>
+                <div class="item-description">
+                    社会支出/GDP比と高齢者比率の関係を、より多くのOECD諸国のデータで可視化しています。日本の2015年から2022年までの推移と、2022年における他のOECD諸国の位置を比較できます。高齢化と社会支出の相関関係を理解するのに役立ちます。
+                </div>
+            </li>
+            <li>
+                <a href="sspending_aging_cursor.html">社会支出と高齢化の関係（簡易版）</a>
+                <div class="item-description">
+                    社会支出/GDP比と高齢者比率の関係を、主要なOECD諸国のデータで簡潔に可視化しています。日本の2010年から2022年までの推移と、2022年における主要国の比較を表形式でも確認できます。
+                </div>
+            </li>
+            <li>
+                <a href="tokyo_flight_game.html">東京フライトゲーム</a>
+                <div class="item-description">
+                    Three.jsを使用した3Dフライトシミュレーターです。東京の街並みを上空から探索できます。WASDキーと矢印キーで飛行機を操作し、マウスで視点を変更できます。東京タワーやスカイツリーなどのランドマークも再現されています。
+                </div>
+            </li>
+            <li>
+                <a href="remixed-13d021fc.html">縦スクロールシューティングゲーム</a>
+                <div class="item-description">
+                    クラシックな縦スクロールシューティングゲームです。矢印キーで移動と回転、スペースキーで射撃を行います。敵の編隊パターンやパワーアップアイテムなど、様々なゲーム要素が実装されています。
+                </div>
+            </li>
         </ul>
     </div>
 </body>

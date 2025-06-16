@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社会支出/GDP比と高齢者比率</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 600px;
+            margin: 20px 0;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(52, 73, 94, 0.05);
+            border-radius: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #2c3e50;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .info-box {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        
+        .data-source {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 0.8em;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .chart-container {
+                height: 500px;
+                padding: 15px;
+            }
+            
+            .legend {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>社会支出/GDP比と高齢者比率の関係</h1>
+        <p class="subtitle">日本の推移（2015-2022年）とOECD諸国の比較（2022年）</p>
+        
+        <div class="chart-container">
+            <canvas id="scatterChart"></canvas>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>日本（時系列）</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>OECD諸国（2022年）</span>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>📊 グラフの読み方：</strong><br>
+            • 横軸：高齢者比率（65歳以上人口／総人口 %）<br>
+            • 縦軸：社会支出/GDP比（%）<br>
+            • 赤い線：日本の2015年から2022年までの推移<br>
+            • 青い点：2022年における他のOECD諸国の位置<br>
+            • 右上に位置するほど、高齢化が進み社会支出の割合が高い
+        </div>
+        
+        <p class="data-source">データ出典：OECD Social Expenditure Database, OECD Demographics Database</p>
+    </div>
+
+    <script>
+        // データ定義
+        const japanTimeSeriesData = [
+            { year: 2015, elderlyRatio: 26.7, socialSpending: 23.1 },
+            { year: 2016, elderlyRatio: 27.3, socialSpending: 23.4 },
+            { year: 2017, elderlyRatio: 27.9, socialSpending: 23.7 },
+            { year: 2018, elderlyRatio: 28.4, socialSpending: 24.0 },
+            { year: 2019, elderlyRatio: 28.9, socialSpending: 24.2 },
+            { year: 2020, elderlyRatio: 29.3, socialSpending: 25.8 },
+            { year: 2021, elderlyRatio: 29.8, socialSpending: 26.1 },
+            { year: 2022, elderlyRatio: 30.0, socialSpending: 25.9 }
+        ];
+
+        const oecdCountriesData = [
+            { country: 'フランス', elderlyRatio: 21.3, socialSpending: 31.2 },
+            { country: 'イタリア', elderlyRatio: 23.8, socialSpending: 28.9 },
+            { country: 'オーストリア', elderlyRatio: 19.6, socialSpending: 27.8 },
+            { country: 'ドイツ', elderlyRatio: 22.7, socialSpending: 27.1 },
+            { country: 'ベルギー', elderlyRatio: 19.8, socialSpending: 26.8 },
+            { country: 'フィンランド', elderlyRatio: 23.1, socialSpending: 26.5 },
+            { country: 'スペイン', elderlyRatio: 20.1, socialSpending: 24.6 },
+            { country: 'ノルウェー', elderlyRatio: 18.3, socialSpending: 24.2 },
+            { country: 'デンマーク', elderlyRatio: 20.9, socialSpending: 24.1 },
+            { country: 'スウェーデン', elderlyRatio: 20.5, socialSpending: 23.9 },
+            { country: 'ポルトガル', elderlyRatio: 23.9, socialSpending: 23.8 },
+            { country: 'オランダ', elderlyRatio: 20.1, socialSpending: 23.7 },
+            { country: 'ルクセンブルク', elderlyRatio: 15.0, socialSpending: 23.0 },
+            { country: 'イギリス', elderlyRatio: 19.2, socialSpending: 22.1 },
+            { country: 'スイス', elderlyRatio: 19.1, socialSpending: 21.8 },
+            { country: 'カナダ', elderlyRatio: 19.0, socialSpending: 21.4 },
+            { country: 'オーストラリア', elderlyRatio: 17.0, socialSpending: 20.1 },
+            { country: 'アメリカ', elderlyRatio: 17.0, socialSpending: 19.3 },
+            { country: '韓国', elderlyRatio: 17.5, socialSpending: 13.6 },
+            { country: 'チリ', elderlyRatio: 13.0, socialSpending: 12.8 }
+        ];
+
+        // Chart.js設定
+        const ctx = document.getElementById('scatterChart').getContext('2d');
+        
+        const chart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '日本（時系列推移）',
+                        data: japanTimeSeriesData.map(d => ({
+                            x: d.elderlyRatio,
+                            y: d.socialSpending,
+                            year: d.year
+                        })),
+                        backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                        borderColor: '#e74c3c',
+                        borderWidth: 3,
+                        pointRadius: 8,
+                        pointHoverRadius: 12,
+                        showLine: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'OECD諸国（2022年）',
+                        data: oecdCountriesData.map(d => ({
+                            x: d.elderlyRatio,
+                            y: d.socialSpending,
+                            country: d.country
+                        })),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: '#3498db',
+                        borderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 10
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '社会支出/GDP比 vs 高齢者比率',
+                        font: {
+                            size: 18,
+                            weight: 'bold'
+                        },
+                        color: '#2c3e50',
+                        padding: 20
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(44, 62, 80, 0.95)',
+                        titleColor: '#ecf0f1',
+                        bodyColor: '#ecf0f1',
+                        borderColor: '#34495e',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            title: function(context) {
+                                const point = context[0];
+                                if (point.dataset.label.includes('日本')) {
+                                    return `日本 (${point.raw.year}年)`;
+                                } else {
+                                    return point.raw.country;
+                                }
+                            },
+                            label: function(context) {
+                                return [
+                                    `高齢者比率: ${context.parsed.x.toFixed(1)}%`,
+                                    `社会支出/GDP比: ${context.parsed.y.toFixed(1)}%`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: '高齢者比率（65歳以上人口／総人口 %）',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#2c3e50'
+                        },
+                        min: 10,
+                        max: 32,
+                        ticks: {
+                            stepSize: 2,
+                            color: '#7f8c8d'
+                        },
+                        grid: {
+                            color: 'rgba(189, 195, 199, 0.3)',
+                            lineWidth: 1
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '社会支出/GDP比（%）',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#2c3e50'
+                        },
+                        min: 10,
+                        max: 35,
+                        ticks: {
+                            stepSize: 2,
+                            color: '#7f8c8d'
+                        },
+                        grid: {
+                            color: 'rgba(189, 195, 199, 0.3)',
+                            lineWidth: 1
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
+        // レスポンシブ対応
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    </script>
+</body>
+</html>

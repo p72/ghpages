@@ -1,5 +1,7 @@
-# GitHub Pages　
 
-内容は適当です。AIポンが多いです。内容は保証しません。
+内容は適当です。
+自分で作ったもの
+ネットで共有から複製したもの（問題があれば連絡を）
 
-index.html - [https://p72.github.io/ghpages/](https://p72.github.io/ghpages/)
+以下のindex.htmlより閲覧ください
+ - [https://p72.github.io/ghpages/](https://p72.github.io/ghpages/)
