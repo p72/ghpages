@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>80年代風RPG - ダンジョン・クエスト</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000020;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+        
+        .game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+        }
+        
+        .left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .game-log {
+            background-color: #001133;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .input-area {
+            background-color: #001133;
+            border: 2px solid #00ff00;
+            padding: 10px;
+        }
+        
+        .map-display {
+            background-color: #001133;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 16px;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+        
+        .right-panel {
+            flex: 1;
+            background-color: #001133;
+            border: 2px solid #00ff00;
+            padding: 15px;
+        }
+        
+        .status-section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        
+        .status-section h3 {
+            color: #ffff00;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .stat-bar {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        
+        .equipment-slot {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 3px;
+            background-color: #000044;
+            border: 1px solid #0066ff;
+        }
+        
+        button {
+            background-color: #0066ff;
+            color: white;
+            border: 2px solid #00aaff;
+            padding: 8px 15px;
+            margin: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        button:hover {
+            background-color: #0088ff;
+        }
+        
+        button:disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .command-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .hp-bar, .mp-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #330000;
+            border: 1px solid #666;
+            margin: 5px 0;
+        }
+        
+        .hp-fill {
+            height: 100%;
+            background-color: #ff0000;
+            transition: width 0.3s;
+        }
+        
+        .mp-fill {
+            height: 100%;
+            background-color: #0000ff;
+            transition: width 0.3s;
+        }
+        
+        .combat-area {
+            background-color: #330000;
+            border: 2px solid #ff0000;
+            padding: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .combat-area.active {
+            display: block;
+        }
+        
+        .monster-info {
+            color: #ff8888;
+            margin-bottom: 10px;
+        }
+        
+        .equipment-menu {
+            background-color: #001133;
+            border: 2px solid #ffff00;
+            padding: 15px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .equipment-menu.active {
+            display: block;
+        }
+        
+        .equipment-menu h3 {
+            color: #ffff00;
+            margin: 0 0 15px 0;
+        }
+        
+        .new-item-stats {
+            background-color: #003300;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .stat-comparison {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+        
+        .stat-up {
+            color: #00ff00;
+        }
+        
+        .stat-down {
+            color: #ff6666;
+        }
+        
+        .equip-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .magic-menu {
+            background-color: #000044;
+            border: 2px solid #0088ff;
+            padding: 15px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .magic-menu.active {
+            display: block;
+        }
+        
+        .magic-menu h3 {
+            color: #0088ff;
+            margin: 0 0 15px 0;
+        }
+        
+        .spell-option {
+            background-color: #001166;
+            border: 1px solid #0088ff;
+            padding: 8px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        
+        .spell-option:hover {
+            background-color: #002288;
+        }
+        
+        .spell-option.disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .spell-cost {
+            color: #88aaff;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #ffff00;">⚔️ ダンジョン・クエスト ⚔️</h1>
+    
+    <div class="game-container">
+        <div class="left-panel">
+            <div class="map-display" id="mapDisplay"></div>
+            <div class="game-log" id="gameLog"></div>
+            <div class="combat-area" id="combatArea">
+                <div class="monster-info" id="monsterInfo"></div>
+                <div class="command-buttons">
+                    <button onclick="attack()">たたかう</button>
+                    <button onclick="magic()">まほう</button>
+                    <button onclick="useItem()">どうぐ</button>
+                    <button onclick="flee()">にげる</button>
+                </div>
+            </div>
+            <div class="equipment-menu" id="equipmentMenu">
+                <h3>装備変更</h3>
+                <div id="newItemDisplay"></div>
+                <div class="equip-buttons">
+                    <button onclick="equipItem('weapon')">武器に装備</button>
+                    <button onclick="equipItem('armor')">防具に装備</button>
+                    <button onclick="equipItem('accessory1')">アクセ1に装備</button>
+                    <button onclick="equipItem('accessory2')">アクセ2に装備</button>
+                    <button onclick="discardItem()">捨てる</button>
+                    <button onclick="closeEquipMenu()">閉じる</button>
+                </div>
+            </div>
+            <div class="magic-menu" id="magicMenu">
+                <h3>魔法選択</h3>
+                <div class="spell-option" onclick="castSpell('fire')">
+                    <strong>ファイア</strong> <span class="spell-cost">(MP: 5)</span><br>
+                    敵に炎の魔法攻撃を放つ
+                </div>
+                <div class="spell-option" onclick="castSpell('heal')">
+                    <strong>ヒール</strong> <span class="spell-cost">(MP: 3)</span><br>
+                    HPを回復する
+                </div>
+                <div class="spell-option" onclick="castSpell('thunder')">
+                    <strong>サンダー</strong> <span class="spell-cost">(MP: 8)</span><br>
+                    敵に強力な雷撃を放つ
+                </div>
+                <button onclick="closeMagicMenu()" style="margin-top: 10px;">閉じる</button>
+            </div>
+            <div class="input-area">
+                <div class="command-buttons" id="movementButtons">
+                    <button onclick="move('north')">北へ</button>
+                    <button onclick="move('south')">南へ</button>
+                    <button onclick="move('east')">東へ</button>
+                    <button onclick="move('west')">西へ</button>
+                    <button onclick="searchRoom()">調べる</button>
+                    <button onclick="magic()">まほう</button>
+                    <button onclick="showInventory()">装備</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="status-section">
+                <h3>勇者ステータス</h3>
+                <div class="stat-bar">
+                    <span>レベル:</span>
+                    <span id="level">1</span>
+                </div>
+                <div class="stat-bar">
+                    <span>経験値:</span>
+                    <span id="exp">0/100</span>
+                </div>
+                <div>
+                    HP: <span id="hp">50/50</span>
+                    <div class="hp-bar">
+                        <div class="hp-fill" id="hpFill" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div>
+                    MP: <span id="mp">20/20</span>
+                    <div class="mp-bar">
+                        <div class="mp-fill" id="mpFill" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="stat-bar">
+                    <span>物理力:</span>
+                    <span id="attack">15</span>
+                </div>
+                <div class="stat-bar">
+                    <span>魔法力:</span>
+                    <span id="magic">8</span>
+                </div>
+            </div>
+            
+            <div class="status-section">
+                <h3>装備</h3>
+                <div class="equipment-slot">
+                    <span>武器:</span>
+                    <span id="weapon">なし</span>
+                </div>
+                <div class="equipment-slot">
+                    <span>防具:</span>
+                    <span id="armor">なし</span>
+                </div>
+                <div class="equipment-slot">
+                    <span>アクセ1:</span>
+                    <span id="accessory1">なし</span>
+                </div>
+                <div class="equipment-slot">
+                    <span>アクセ2:</span>
+                    <span id="accessory2">なし</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ゲーム状態
+        let gameState = {
+            player: {
+                level: 1,
+                hp: 60,
+                maxHp: 60,
+                mp: 25,
+                maxMp: 25,
+                baseAttack: 12,
+                baseMagic: 10,
+                exp: 0,
+                expToNext: 100,
+                x: 2,
+                y: 4,
+                equipment: {
+                    weapon: null,
+                    armor: null,
+                    accessory1: null,
+                    accessory2: null
+                }
+            },
+            dungeon: [],
+            inCombat: false,
+            currentMonster: null,
+            gameLog: [],
+            inventory: [],
+            showingEquipMenu: false,
+            showingMagicMenu: false
+        };
+
+        // モンスターデータ
+        const monsters = [
+            {name: "スライム", hp: 25, mp: 0, attack: 8, magic: 0, exp: 15, dropRate: 0.3},
+            {name: "ゴブリン", hp: 35, mp: 5, attack: 12, magic: 3, exp: 25, dropRate: 0.4},
+            {name: "オーク", hp: 55, mp: 10, attack: 18, magic: 5, exp: 40, dropRate: 0.5},
+            {name: "スケルトン", hp: 45, mp: 15, attack: 15, magic: 8, exp: 35, dropRate: 0.45},
+            {name: "ドラゴン(ボス)", hp: 120, mp: 30, attack: 25, magic: 15, exp: 200, dropRate: 1.0}
+        ];
+
+        // 装備のプレフィックスと基本装備
+        const prefixes = [
+            {name: "ボロボロの", hp: -2, mp: 0, attack: -1, magic: 0},
+            {name: "普通の", hp: 0, mp: 0, attack: 0, magic: 0},
+            {name: "鋭い", hp: 0, mp: 0, attack: 3, magic: 0},
+            {name: "頑丈な", hp: 5, mp: 0, attack: 0, magic: 0},
+            {name: "魔力の", hp: 0, mp: 5, attack: 0, magic: 3},
+            {name: "伝説の", hp: 8, mp: 8, attack: 5, magic: 5}
+        ];
+
+        const baseEquipment = {
+            weapon: [{name: "短剣", attack: 5}, {name: "剣", attack: 8}, {name: "斧", attack: 10}],
+            armor: [{name: "服", hp: 5}, {name: "革鎧", hp: 12}, {name: "鉄鎧", hp: 20}],
+            accessory: [{name: "指輪", hp: 3, magic: 2}, {name: "首飾り", mp: 8}, {name: "腕輪", attack: 3}]
+        };
+
+        // 初期装備定義
+        const startingEquipment = {
+            weapon: {
+                type: 'weapon',
+                displayName: '木の剣',
+                hp: 0,
+                mp: 0,
+                attack: 8,
+                magic: 0
+            },
+            armor: {
+                type: 'armor', 
+                displayName: '布の服',
+                hp: 10,
+                mp: 2,
+                attack: 0,
+                magic: 1
+            },
+            accessory: {
+                type: 'accessory',
+                displayName: '革の腕輪',
+                hp: 5,
+                mp: 0,
+                attack: 2,
+                magic: 0
+            }
+        };
+
+        // ダンジョン生成（5x5）
+        function generateDungeon() {
+            const dungeon = [];
+            for (let y = 0; y < 5; y++) {
+                dungeon[y] = [];
+                for (let x = 0; x < 5; x++) {
+                    let cell = {
+                        visited: false,
+                        hasMonster: Math.random() < 0.3,
+                        hasTreasure: Math.random() < 0.1,
+                        isBossRoom: false
+                    };
+                    
+                    // ボス部屋は右上に配置
+                    if (x === 4 && y === 0) {
+                        cell.isBossRoom = true;
+                        cell.hasMonster = true;
+                        cell.hasTreasure = false;
+                    }
+                    
+                    // スタート地点
+                    if (x === 2 && y === 4) {
+                        cell.hasMonster = false;
+                        cell.visited = true;
+                    }
+                    
+                    dungeon[y][x] = cell;
+                }
+            }
+            return dungeon;
+        }
+
+        // マップ表示
+        function displayMap() {
+            const map = [];
+            for (let y = 0; y < 5; y++) {
+                let row = "";
+                for (let x = 0; x < 5; x++) {
+                    if (x === gameState.player.x && y === gameState.player.y) {
+                        row += "[@]";
+                    } else if (gameState.dungeon[y][x].visited) {
+                        if (gameState.dungeon[y][x].isBossRoom) {
+                            row += "[B]";
+                        } else {
+                            row += "[ ]";
+                        }
+                    } else {
+                        row += "[?]";
+                    }
+                }
+                map.push(row);
+            }
+            
+            document.getElementById('mapDisplay').innerHTML = 
+                "=== ダンジョンマップ ===<br>" + 
+                map.join('<br>') + 
+                "<br>[@]=勇者 [B]=ボス [?]=未探索";
+        }
+
+        // ログ追加
+        function addLog(message) {
+            gameState.gameLog.push(message);
+            const logElement = document.getElementById('gameLog');
+            logElement.innerHTML += message + '<br>';
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // ステータス更新
+        function updateDisplay() {
+            const player = gameState.player;
+            const totalStats = calculateTotalStats();
+            
+            document.getElementById('level').textContent = player.level;
+            document.getElementById('exp').textContent = `${player.exp}/${player.expToNext}`;
+            document.getElementById('hp').textContent = `${player.hp}/${player.maxHp}`;
+            document.getElementById('mp').textContent = `${player.mp}/${player.maxMp}`;
+            document.getElementById('attack').textContent = totalStats.attack;
+            document.getElementById('magic').textContent = totalStats.magic;
+            
+            // HPバー
+            const hpPercent = (player.hp / player.maxHp) * 100;
+            document.getElementById('hpFill').style.width = hpPercent + '%';
+            
+            // MPバー
+            const mpPercent = (player.mp / player.maxMp) * 100;
+            document.getElementById('mpFill').style.width = mpPercent + '%';
+            
+            // 装備表示
+            document.getElementById('weapon').textContent = 
+                player.equipment.weapon ? player.equipment.weapon.displayName : 'なし';
+            document.getElementById('armor').textContent = 
+                player.equipment.armor ? player.equipment.armor.displayName : 'なし';
+            document.getElementById('accessory1').textContent = 
+                player.equipment.accessory1 ? player.equipment.accessory1.displayName : 'なし';
+            document.getElementById('accessory2').textContent = 
+                player.equipment.accessory2 ? player.equipment.accessory2.displayName : 'なし';
+        }
+
+        // 総合ステータス計算
+        function calculateTotalStats() {
+            const player = gameState.player;
+            let totalAttack = player.baseAttack;
+            let totalMagic = player.baseMagic;
+            let totalHp = player.maxHp;
+            let totalMp = player.maxMp;
+            
+            Object.values(player.equipment).forEach(item => {
+                if (item) {
+                    totalAttack += item.attack || 0;
+                    totalMagic += item.magic || 0;
+                    totalHp += item.hp || 0;
+                    totalMp += item.mp || 0;
+                }
+            });
+            
+            return {attack: totalAttack, magic: totalMagic, hp: totalHp, mp: totalMp};
+        }
+
+        // 移動
+        function move(direction) {
+            if (gameState.inCombat || gameState.showingEquipMenu || gameState.showingMagicMenu) return;
+            
+            let newX = gameState.player.x;
+            let newY = gameState.player.y;
+            
+            switch(direction) {
+                case 'north': newY--; break;
+                case 'south': newY++; break;
+                case 'east': newX++; break;
+                case 'west': newX--; break;
+            }
+            
+            if (newX < 0 || newX >= 5 || newY < 0 || newY >= 5) {
+                addLog("そちらへは進めません。");
+                return;
+            }
+            
+            gameState.player.x = newX;
+            gameState.player.y = newY;
+            
+            const currentRoom = gameState.dungeon[newY][newX];
+            currentRoom.visited = true;
+            
+            addLog(`${direction}へ移動しました。`);
+            
+            if (currentRoom.isBossRoom && !gameState.inCombat) {
+                addLog("ついに最深部に到達した！巨大なドラゴンが立ちはだかる！");
+                startCombat(monsters[4]); // ボス戦
+            } else if (currentRoom.hasMonster && Math.random() < 0.6) {
+                const monsterIndex = Math.floor(Math.random() * 4);
+                startCombat(monsters[monsterIndex]);
+            } else if (currentRoom.hasTreasure) {
+                findTreasure();
+                currentRoom.hasTreasure = false;
+            }
+            
+            displayMap();
+        }
+
+        // 部屋を調べる
+        function searchRoom() {
+            if (gameState.inCombat || gameState.showingEquipMenu || gameState.showingMagicMenu) return;
+            
+            const currentRoom = gameState.dungeon[gameState.player.y][gameState.player.x];
+            
+            if (currentRoom.hasTreasure) {
+                findTreasure();
+                currentRoom.hasTreasure = false;
+            } else if (currentRoom.hasMonster && Math.random() < 0.4) {
+                const monsterIndex = Math.floor(Math.random() * 4);
+                addLog("何かが潜んでいる...");
+                startCombat(monsters[monsterIndex]);
+            } else {
+                addLog("特に何も見つからなかった。");
+            }
+        }
+
+        // 宝箱発見
+        function findTreasure() {
+            addLog("宝箱を発見した！");
+            generateRandomEquipment();
+        }
+
+        // 戦闘開始
+        function startCombat(monsterTemplate) {
+            gameState.inCombat = true;
+            gameState.currentMonster = {
+                ...monsterTemplate,
+                maxHp: monsterTemplate.hp
+            };
+            
+            document.getElementById('combatArea').classList.add('active');
+            document.getElementById('movementButtons').style.display = 'none';
+            
+            addLog(`${gameState.currentMonster.name}が現れた！`);
+            updateMonsterDisplay();
+        }
+
+        // モンスター表示更新
+        function updateMonsterDisplay() {
+            const monster = gameState.currentMonster;
+            document.getElementById('monsterInfo').innerHTML = 
+                `${monster.name}<br>HP: ${monster.hp}/${monster.maxHp}`;
+        }
+
+        // 攻撃
+        function attack() {
+            if (!gameState.inCombat) return;
+            
+            const totalStats = calculateTotalStats();
+            const damage = Math.max(1, totalStats.attack - 5 + Math.floor(Math.random() * 10));
+            gameState.currentMonster.hp -= damage;
+            
+            addLog(`勇者の攻撃！${gameState.currentMonster.name}に${damage}のダメージ！`);
+            
+            if (gameState.currentMonster.hp <= 0) {
+                winCombat();
+                return;
+            }
+            
+            monsterTurn();
+        }
+
+        // 魔法メニューを開く
+        function magic() {
+            if (gameState.showingEquipMenu) return;
+            
+            gameState.showingMagicMenu = true;
+            document.getElementById('magicMenu').classList.add('active');
+            
+            if (gameState.inCombat) {
+                document.getElementById('combatArea').style.display = 'none';
+            } else {
+                document.getElementById('movementButtons').style.display = 'none';
+            }
+            
+            updateSpellAvailability();
+        }
+
+        // 魔法使用可能状態の更新
+        function updateSpellAvailability() {
+            const spells = document.querySelectorAll('.spell-option');
+            const player = gameState.player;
+            
+            // ファイア (MP: 5)
+            if (player.mp >= 5) {
+                spells[0].classList.remove('disabled');
+            } else {
+                spells[0].classList.add('disabled');
+            }
+            
+            // ヒール (MP: 3)
+            if (player.mp >= 3 && player.hp < player.maxHp) {
+                spells[1].classList.remove('disabled');
+            } else {
+                spells[1].classList.add('disabled');
+            }
+            
+            // サンダー (MP: 8)
+            if (player.mp >= 8 && gameState.inCombat) {
+                spells[2].classList.remove('disabled');
+            } else {
+                spells[2].classList.add('disabled');
+            }
+        }
+
+        // 魔法詠唱
+        function castSpell(spellType) {
+            const player = gameState.player;
+            
+            switch(spellType) {
+                case 'fire':
+                    if (player.mp < 5) {
+                        addLog("MPが足りません！");
+                        return;
+                    }
+                    if (!gameState.inCombat) {
+                        addLog("戦闘中以外では使用できません！");
+                        return;
+                    }
+                    
+                    player.mp -= 5;
+                    const totalStats = calculateTotalStats();
+                    const damage = Math.max(3, totalStats.magic + Math.floor(Math.random() * 8));
+                    gameState.currentMonster.hp -= damage;
+                    
+                    addLog(`ファイア！${gameState.currentMonster.name}に${damage}のダメージ！`);
+                    
+                    closeMagicMenu();
+                    
+                    if (gameState.currentMonster.hp <= 0) {
+                        winCombat();
+                        return;
+                    }
+                    
+                    monsterTurn();
+                    break;
+                    
+                case 'heal':
+                    if (player.mp < 3) {
+                        addLog("MPが足りません！");
+                        return;
+                    }
+                    if (player.hp >= player.maxHp) {
+                        addLog("HPは満タンです！");
+                        return;
+                    }
+                    
+                    player.mp -= 3;
+                    const totalStats2 = calculateTotalStats();
+                    const healAmount = Math.max(15, Math.floor(totalStats2.magic * 1.5) + Math.floor(Math.random() * 10));
+                    const actualHeal = Math.min(healAmount, player.maxHp - player.hp);
+                    player.hp += actualHeal;
+                    
+                    addLog(`ヒール！HPが${actualHeal}回復した！`);
+                    
+                    closeMagicMenu();
+                    
+                    if (gameState.inCombat) {
+                        monsterTurn();
+                    }
+                    break;
+                    
+                case 'thunder':
+                    if (player.mp < 8) {
+                        addLog("MPが足りません！");
+                        return;
+                    }
+                    if (!gameState.inCombat) {
+                        addLog("戦闘中以外では使用できません！");
+                        return;
+                    }
+                    
+                    player.mp -= 8;
+                    const totalStats3 = calculateTotalStats();
+                    const thunderDamage = Math.max(8, Math.floor(totalStats3.magic * 1.8) + Math.floor(Math.random() * 12));
+                    gameState.currentMonster.hp -= thunderDamage;
+                    
+                    addLog(`サンダー！強力な雷撃が${gameState.currentMonster.name}を襲う！${thunderDamage}のダメージ！`);
+                    
+                    closeMagicMenu();
+                    
+                    if (gameState.currentMonster.hp <= 0) {
+                        winCombat();
+                        return;
+                    }
+                    
+                    monsterTurn();
+                    break;
+            }
+        }
+
+        // 魔法メニューを閉じる
+        function closeMagicMenu() {
+            gameState.showingMagicMenu = false;
+            document.getElementById('magicMenu').classList.remove('active');
+            
+            if (gameState.inCombat) {
+                document.getElementById('combatArea').style.display = 'block';
+            } else if (!gameState.showingEquipMenu) {
+                document.getElementById('movementButtons').style.display = 'flex';
+            }
+            
+            updateDisplay();
+        }
+
+        // アイテム使用（簡易回復）
+        function useItem() {
+            if (!gameState.inCombat) return;
+            
+            const healAmount = 20;
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+            addLog(`薬草を使用！HPが${healAmount}回復した！`);
+            
+            monsterTurn();
+        }
+
+        // 逃走
+        function flee() {
+            if (!gameState.inCombat) return;
+            
+            if (gameState.currentMonster.name.includes("ボス")) {
+                addLog("ボスからは逃げられない！");
+                monsterTurn();
+                return;
+            }
+            
+            if (Math.random() < 0.7) {
+                addLog("逃走成功！");
+                endCombat();
+            } else {
+                addLog("逃げ切れなかった！");
+                monsterTurn();
+            }
+        }
+
+        // モンスターのターン
+        function monsterTurn() {
+            updateMonsterDisplay();
+            updateDisplay();
+            
+            setTimeout(() => {
+                const monster = gameState.currentMonster;
+                const damage = Math.max(1, monster.attack - 3 + Math.floor(Math.random() * 6));
+                gameState.player.hp -= damage;
+                
+                addLog(`${monster.name}の攻撃！勇者に${damage}のダメージ！`);
+                
+                if (gameState.player.hp <= 0) {
+                    gameOver();
+                } else {
+                    updateDisplay();
+                }
+            }, 1000);
+        }
+
+        // 戦闘勝利
+        function winCombat() {
+            const monster = gameState.currentMonster;
+            gameState.player.exp += monster.exp;
+            
+            addLog(`${monster.name}を倒した！経験値${monster.exp}を獲得！`);
+            
+            // ドロップ判定
+            if (Math.random() < monster.dropRate) {
+                generateRandomEquipment();
+            }
+            
+            // レベルアップ判定
+            if (gameState.player.exp >= gameState.player.expToNext) {
+                levelUp();
+            }
+            
+            // ボス勝利判定
+            if (monster.name.includes("ボス")) {
+                addLog("🎉 おめでとう！ダンジョンを制覇しました！ 🎉");
+            }
+            
+            endCombat();
+        }
+
+        // 戦闘終了
+        function endCombat() {
+            gameState.inCombat = false;
+            gameState.currentMonster = null;
+            
+            document.getElementById('combatArea').classList.remove('active');
+            document.getElementById('movementButtons').style.display = 'flex';
+            
+            updateDisplay();
+        }
+
+        // レベルアップ
+        function levelUp() {
+            gameState.player.level++;
+            gameState.player.exp -= gameState.player.expToNext;
+            gameState.player.expToNext = Math.floor(gameState.player.expToNext * 1.5);
+            
+            // ステータス上昇
+            const hpInc = 10 + Math.floor(Math.random() * 5);
+            const mpInc = 5 + Math.floor(Math.random() * 3);
+            const attInc = 3 + Math.floor(Math.random() * 3);
+            const magInc = 2 + Math.floor(Math.random() * 2);
+            
+            gameState.player.maxHp += hpInc;
+            gameState.player.hp = gameState.player.maxHp; // 全回復
+            gameState.player.maxMp += mpInc;
+            gameState.player.mp = gameState.player.maxMp;
+            gameState.player.baseAttack += attInc;
+            gameState.player.baseMagic += magInc;
+            
+            addLog(`🌟 レベルアップ！ Lv.${gameState.player.level} になった！`);
+            addLog(`HP+${hpInc}, MP+${mpInc}, 物理力+${attInc}, 魔法力+${magInc}`);
+        }
+
+        // ランダム装備生成
+        function generateRandomEquipment() {
+            const equipTypes = ['weapon', 'armor', 'accessory'];
+            const equipType = equipTypes[Math.floor(Math.random() * equipTypes.length)];
+            const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            
+            let baseItem;
+            if (equipType === 'weapon') {
+                baseItem = baseEquipment.weapon[Math.floor(Math.random() * baseEquipment.weapon.length)];
+            } else if (equipType === 'armor') {
+                baseItem = baseEquipment.armor[Math.floor(Math.random() * baseEquipment.armor.length)];
+            } else {
+                baseItem = baseEquipment.accessory[Math.floor(Math.random() * baseEquipment.accessory.length)];
+            }
+            
+            const newItem = {
+                type: equipType,
+                displayName: prefix.name + baseItem.name,
+                hp: (baseItem.hp || 0) + prefix.hp,
+                mp: (baseItem.mp || 0) + prefix.mp,
+                attack: (baseItem.attack || 0) + prefix.attack,
+                magic: (baseItem.magic || 0) + prefix.magic
+            };
+            
+            addLog(`${newItem.displayName}を発見した！`);
+            offerEquipment(newItem);
+        }
+
+        // 装備変更提案
+        function offerEquipment(newItem) {
+            gameState.pendingItem = newItem;
+            gameState.showingEquipMenu = true;
+            
+            document.getElementById('equipmentMenu').classList.add('active');
+            document.getElementById('movementButtons').style.display = 'none';
+            
+            showNewItemStats(newItem);
+            updateEquipButtons(newItem);
+            
+            addLog(`${newItem.displayName}を入手！装備しますか？`);
+        }
+
+        // 新アイテムの詳細表示
+        function showNewItemStats(item) {
+            let statsHtml = `<div class="new-item-stats">
+                <strong>${item.displayName}</strong><br>`;
+            
+            if (item.hp !== 0) statsHtml += `HP: ${item.hp > 0 ? '+' : ''}${item.hp}<br>`;
+            if (item.mp !== 0) statsHtml += `MP: ${item.mp > 0 ? '+' : ''}${item.mp}<br>`;
+            if (item.attack !== 0) statsHtml += `物理力: ${item.attack > 0 ? '+' : ''}${item.attack}<br>`;
+            if (item.magic !== 0) statsHtml += `魔法力: ${item.magic > 0 ? '+' : ''}${item.magic}<br>`;
+            
+            statsHtml += '</div>';
+            
+            // 現在の装備との比較
+            const slots = item.type === 'accessory' ? ['accessory1', 'accessory2'] : [item.type];
+            
+            slots.forEach(slot => {
+                const currentItem = gameState.player.equipment[slot];
+                if (currentItem) {
+                    statsHtml += `<div class="stat-comparison">
+                        現在の${slot === 'accessory1' ? 'アクセ1' : slot === 'accessory2' ? 'アクセ2' : 
+                                   slot === 'weapon' ? '武器' : '防具'}: ${currentItem.displayName}
+                    </div>`;
+                    
+                    statsHtml += compareStats(currentItem, item);
+                }
+            });
+            
+            document.getElementById('newItemDisplay').innerHTML = statsHtml;
+        }
+
+        // ステータス比較表示
+        function compareStats(oldItem, newItem) {
+            let comparison = '<div class="stat-comparison">';
+            
+            ['hp', 'mp', 'attack', 'magic'].forEach(stat => {
+                const oldVal = oldItem[stat] || 0;
+                const newVal = newItem[stat] || 0;
+                const diff = newVal - oldVal;
+                
+                if (diff !== 0) {
+                    const statName = stat === 'attack' ? '物理力' : stat === 'magic' ? '魔法力' : stat.toUpperCase();
+                    const diffClass = diff > 0 ? 'stat-up' : 'stat-down';
+                    comparison += `<span class="${diffClass}">${statName}: ${diff > 0 ? '+' : ''}${diff}</span><br>`;
+                }
+            });
+            
+            comparison += '</div>';
+            return comparison;
+        }
+
+        // 装備ボタンの表示/非表示制御
+        function updateEquipButtons(item) {
+            const buttons = document.querySelectorAll('.equip-buttons button');
+            buttons.forEach(btn => btn.style.display = 'inline-block');
+            
+            if (item.type === 'weapon') {
+                buttons[1].style.display = 'none'; // 防具ボタン隠す
+                buttons[2].style.display = 'none'; // アクセ1ボタン隠す
+                buttons[3].style.display = 'none'; // アクセ2ボタン隠す
+            } else if (item.type === 'armor') {
+                buttons[0].style.display = 'none'; // 武器ボタン隠す
+                buttons[2].style.display = 'none'; // アクセ1ボタン隠す
+                buttons[3].style.display = 'none'; // アクセ2ボタン隠す
+            } else if (item.type === 'accessory') {
+                buttons[0].style.display = 'none'; // 武器ボタン隠す
+                buttons[1].style.display = 'none'; // 防具ボタン隠す
+            }
+        }
+
+        // アイテム装備
+        function equipItem(slot) {
+            if (!gameState.pendingItem) return;
+            
+            const oldItem = gameState.player.equipment[slot];
+            gameState.player.equipment[slot] = gameState.pendingItem;
+            
+            if (oldItem) {
+                addLog(`${oldItem.displayName}を外しました。`);
+            }
+            
+            addLog(`${gameState.pendingItem.displayName}を装備しました！`);
+            
+            // HPとMPの最大値が変更された場合の処理
+            const totalStats = calculateTotalStats();
+            if (gameState.player.hp > totalStats.hp) {
+                gameState.player.hp = totalStats.hp;
+            }
+            if (gameState.player.mp > totalStats.mp) {
+                gameState.player.mp = totalStats.mp;
+            }
+            gameState.player.maxHp = totalStats.hp;
+            gameState.player.maxMp = totalStats.mp;
+            
+            closeEquipMenu();
+        }
+
+        // アイテムを捨てる
+        function discardItem() {
+            if (!gameState.pendingItem) return;
+            
+            addLog(`${gameState.pendingItem.displayName}を捨てました。`);
+            closeEquipMenu();
+        }
+
+        // 装備メニューを閉じる
+        function closeEquipMenu() {
+            gameState.showingEquipMenu = false;
+            gameState.pendingItem = null;
+            
+            document.getElementById('equipmentMenu').classList.remove('active');
+            if (!gameState.inCombat) {
+                document.getElementById('movementButtons').style.display = 'flex';
+            }
+            
+            updateDisplay();
+        }
+
+        // 装備メニュー表示
+        function showInventory() {
+            if (gameState.showingMagicMenu) return;
+            
+            addLog("=== 現在の装備 ===");
+            const totalStats = calculateTotalStats();
+            
+            addLog(`総合ステータス: HP${totalStats.hp} MP${totalStats.mp} 物理力${totalStats.attack} 魔法力${totalStats.magic}`);
+            addLog(`武器: ${gameState.player.equipment.weapon?.displayName || 'なし'}`);
+            addLog(`防具: ${gameState.player.equipment.armor?.displayName || 'なし'}`);
+            addLog(`アクセ1: ${gameState.player.equipment.accessory1?.displayName || 'なし'}`);
+            addLog(`アクセ2: ${gameState.player.equipment.accessory2?.displayName || 'なし'}`);
+        }
+
+        // ゲームオーバー
+        function gameOver() {
+            addLog("💀 GAME OVER 💀");
+            addLog("勇者は力尽きた...");
+            // リセット処理
+            setTimeout(() => {
+                if (confirm("もう一度挑戦しますか？")) {
+                    location.reload();
+                }
+            }, 2000);
+        }
+
+        // ゲーム初期化
+        function initGame() {
+            gameState.dungeon = generateDungeon();
+            
+            // 初期装備を装備
+            gameState.player.equipment.weapon = startingEquipment.weapon;
+            gameState.player.equipment.armor = startingEquipment.armor;
+            gameState.player.equipment.accessory1 = startingEquipment.accessory;
+            
+            // 初期装備を含めた総合ステータスでHP/MPを再計算
+            const totalStats = calculateTotalStats();
+            gameState.player.maxHp = totalStats.hp;
+            gameState.player.maxMp = totalStats.mp;
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.player.mp = gameState.player.maxMp;
+            
+            displayMap();
+            updateDisplay();
+            addLog("=== ダンジョン・クエスト開始 ===");
+            addLog("勇者よ、ダンジョンの奥に潜むボスを倒すのだ！");
+            addLog("移動は方向ボタンを使用してください。");
+            addLog("魔法：ファイア(攻撃), ヒール(回復), サンダー(強攻撃)");
+            addLog("━━━ 初期装備 ━━━");
+            addLog("木の剣 (物理力+8) を装備");
+            addLog("布の服 (HP+10, MP+2, 魔法力+1) を装備");
+            addLog("革の腕輪 (HP+5, 物理力+2) を装備");
+            
+            // 最終ステータスを表示
+            const finalStats = calculateTotalStats();
+            addLog(`総合力: HP${finalStats.hp} MP${finalStats.mp} 物理力${finalStats.attack} 魔法力${finalStats.magic}`);
+        }
+
+        // ゲーム開始
+        initGame();
+    </script>
+</body>
+</html>

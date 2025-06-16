@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倉庫番 - Sokoban</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-info {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(10, 50px);
+            gap: 1px;
+            background-color: #34495e;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .tile {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tile:hover {
+            opacity: 0.8;
+        }
+
+        .empty {
+            background-color: #7f8c8d;
+        }
+
+        .wall {
+            background-color: #2c3e50;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .player {
+            background-color: #3498db;
+            animation: pulse 1s infinite;
+        }
+
+        .crate {
+            background-color: #e67e22;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .goal {
+            background-color: #27ae60;
+            position: relative;
+        }
+
+        .goal::before {
+            content: '◎';
+            color: #fff;
+            font-size: 25px;
+        }
+
+        .crate-on-goal {
+            background-color: #f39c12;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.8);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .controls p {
+            margin: 5px 0;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #f1c40f;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: celebrate 1s ease-in-out infinite;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            75% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>倉庫番 - Sokoban</h1>
+    <div class="game-info">
+        <p>移動回数: <span id="moves">0</span></p>
+    </div>
+    <div class="game-board" id="gameBoard"></div>
+    <div class="controls">
+        <p>矢印キーで移動 / 隣接するマスをクリックでも移動可能</p>
+        <p>🧑 = プレイヤー | 📦 = 箱 | 🎯 = ゴール | 🧱 = 壁</p>
+        <button onclick="resetGame()">リセット</button>
+    </div>
+    <div id="message"></div>
+
+    <script>
+        // ゲームの定数
+        const EMPTY = 0;
+        const WALL = 1;
+        const PLAYER = 2;
+        const CRATE = 3;
+        const GOAL = 4;
+        const CRATE_ON_GOAL = 5;
+        const PLAYER_ON_GOAL = 6;
+
+        // 初期マップ（10×10）
+        const initialMap = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [1, 0, 2, 0, 1, 0, 3, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+            [1, 4, 0, 0, 3, 0, 0, 0, 4, 1],
+            [1, 0, 0, 0, 0, 0, 3, 0, 0, 1],
+            [1, 0, 1, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 4, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+        
+        // ゴールの位置を固定で記録（マップデータと同期）
+        const GOAL_POSITIONS = [
+            {x: 1, y: 5},
+            {x: 8, y: 5},
+            {x: 8, y: 8}
+        ];
+
+        let map = [];
+        let playerPos = { x: 0, y: 0 };
+        let moves = 0;
+        let goalPositions = [];
+
+        function initGame() {
+            // マップのディープコピー
+            map = initialMap.map(row => [...row]);
+            moves = 0;
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('message').textContent = '';
+
+            // プレイヤーの位置を見つける
+            for (let y = 0; y < 10; y++) {
+                for (let x = 0; x < 10; x++) {
+                    if (map[y][x] === PLAYER) {
+                        playerPos = { x, y };
+                    }
+                }
+            }
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+
+            for (let y = 0; y < 10; y++) {
+                for (let x = 0; x < 10; x++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.dataset.x = x;
+                    tile.dataset.y = y;
+
+                    const value = map[y][x];
+                    
+                    // ゴール位置の確認
+                    const isGoalPos = GOAL_POSITIONS.some(g => g.x === x && g.y === y);
+
+                    switch (value) {
+                        case EMPTY:
+                            tile.classList.add(isGoalPos ? 'goal' : 'empty');
+                            break;
+                        case WALL:
+                            tile.classList.add('wall');
+                            tile.textContent = '🧱';
+                            break;
+                        case PLAYER:
+                            tile.classList.add(isGoalPos ? 'goal' : 'player');
+                            tile.textContent = '🧑';
+                            break;
+                        case CRATE:
+                            tile.classList.add(isGoalPos ? 'crate-on-goal' : 'crate');
+                            tile.textContent = '📦';
+                            break;
+                        case GOAL:
+                            tile.classList.add('goal');
+                            break;
+                        case CRATE_ON_GOAL:
+                            tile.classList.add('crate-on-goal');
+                            tile.textContent = '📦';
+                            break;
+                        case PLAYER_ON_GOAL:
+                            tile.classList.add('goal');
+                            tile.textContent = '🧑';
+                            break;
+                    }
+
+                    board.appendChild(tile);
+                }
+            }
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
+
+            // 境界チェック
+            if (newX < 0 || newX >= 10 || newY < 0 || newY >= 10) return;
+
+            const targetTile = map[newY][newX];
+
+            // 壁には移動できない
+            if (targetTile === WALL) return;
+
+            // 箱がある場合
+            if (targetTile === CRATE || targetTile === CRATE_ON_GOAL) {
+                const boxNewX = newX + dx;
+                const boxNewY = newY + dy;
+
+                // 箱の移動先チェック
+                if (boxNewX < 0 || boxNewX >= 10 || boxNewY < 0 || boxNewY >= 10) return;
+
+                const boxTargetTile = map[boxNewY][boxNewX];
+                
+                // 箱の移動先が壁や他の箱の場合は移動できない
+                if (boxTargetTile === WALL || boxTargetTile === CRATE || boxTargetTile === CRATE_ON_GOAL) return;
+
+                // 箱を移動
+                const isBoxOnGoal = GOAL_POSITIONS.some(g => g.x === boxNewX && g.y === boxNewY);
+                map[boxNewY][boxNewX] = isBoxOnGoal ? CRATE_ON_GOAL : CRATE;
+            }
+
+            // プレイヤーの元の位置をクリア
+            const wasPlayerOnGoal = GOAL_POSITIONS.some(g => g.x === playerPos.x && g.y === playerPos.y);
+            map[playerPos.y][playerPos.x] = wasPlayerOnGoal ? GOAL : EMPTY;
+
+            // プレイヤーを新しい位置に移動
+            const isPlayerOnGoal = GOAL_POSITIONS.some(g => g.x === newX && g.y === newY);
+            map[newY][newX] = isPlayerOnGoal ? PLAYER_ON_GOAL : PLAYER;
+
+            playerPos = { x: newX, y: newY };
+            moves++;
+            document.getElementById('moves').textContent = moves;
+
+            renderBoard();
+            checkWin();
+        }
+
+        function checkWin() {
+            // すべてのゴール位置に箱があるかチェック
+            let allGoalsHaveCrates = true;
+            
+            for (const goal of GOAL_POSITIONS) {
+                const tile = map[goal.y][goal.x];
+                if (tile !== CRATE_ON_GOAL) {
+                    allGoalsHaveCrates = false;
+                    break;
+                }
+            }
+
+            if (allGoalsHaveCrates) {
+                document.getElementById('message').textContent = '🎉 クリア！おめでとう！ 🎉';
+            }
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // クリック/タッチでの移動処理
+        function handleTileClick(e) {
+            const tile = e.target.closest('.tile');
+            if (!tile) return;
+
+            const x = parseInt(tile.dataset.x);
+            const y = parseInt(tile.dataset.y);
+
+            // プレイヤーの隣接マスかチェック
+            const dx = x - playerPos.x;
+            const dy = y - playerPos.y;
+
+            // 隣接マス（上下左右）のみ移動可能
+            if (Math.abs(dx) + Math.abs(dy) === 1) {
+                movePlayer(dx, dy);
+            }
+        }
+
+        // ゲームボードにクリックイベントを追加
+        document.getElementById('gameBoard').addEventListener('click', handleTileClick);
+
+        // タッチデバイス対応
+        document.getElementById('gameBoard').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (element && element.classList.contains('tile')) {
+                handleTileClick({ target: element });
+            }
+        });
+
+        // キーボード入力の処理
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+
+        // ゲーム開始
+        initGame();
+    </script>
+</body>
+</html>
