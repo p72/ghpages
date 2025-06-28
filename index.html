@@ -9,120 +9,221 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
         }
         h1 {
             color: #333;
-            margin-bottom: 20px;
-            font-size: 1.8em;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            text-align: center;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .description {
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             line-height: 1.6;
+            text-align: center;
+            font-size: 1.1em;
         }
-        .links {
-            list-style: none;
-            padding: 0;
+        .category-section {
+            margin-bottom: 40px;
         }
-        .links li {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
+        .category-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+        }
+        .category-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .tile {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
         }
-        .links li:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
+        .tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
         }
-        .links a {
+        .tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+        .tile a {
             color: #0066cc;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 1.1em;
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
         }
-        .links a:hover {
-            text-decoration: underline;
+        .tile a:hover {
+            color: #667eea;
+            text-decoration: none;
         }
-        .item-description {
+        .tile-description {
             color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+        .tile-meta {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.85em;
+            color: #888;
+        }
+        .data-visualization .tile::before {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+        }
+        .games .tile::before {
+            background: linear-gradient(90deg, #FF9800, #F57C00);
+        }
+        @media (max-width: 768px) {
+            .tiles-grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>データ可視化ギャラリー</h1>
+        <h1>📊 データ可視化ギャラリー</h1>
         <p class="description">医療・健康に関するデータの視覚化コレクションです。各チャートは、データの理解を深め、洞察を得るためのツールとして設計されています。</p>
         
-        <ul class="links">
-            <li>
-                <a href="data-visualization/health_spending_age_comparison_chart.html">年齢別医療費支出の国際比較</a>
-                <div class="item-description">
-                    OECD諸国における年齢別医療費支出を比較したインタラクティブなチャートです。40-44歳を基準とした相対的な医療費支出倍率を、日本、米国、OECD7カ国平均、ドイツ、英国のデータで可視化しています。高齢化社会における医療費の特徴を理解するのに役立ちます。
+        <div class="category-section data-visualization">
+            <h2 class="category-title">
+                <span class="category-icon">📈</span>
+                データ可視化
+            </h2>
+            <div class="tiles-grid">
+                <div class="tile">
+                    <a href="data-visualization/health_spending_age_comparison_chart.html">年齢別医療費支出の国際比較</a>
+                    <div class="tile-description">
+                        OECD諸国における年齢別医療費支出を比較したインタラクティブなチャートです。40-44歳を基準とした相対的な医療費支出倍率を、日本、米国、OECD7カ国平均、ドイツ、英国のデータで可視化しています。
+                    </div>
+                    <div class="tile-meta">
+                        📊 インタラクティブチャート | 🌍 国際比較
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="data-visualization/healthspending_by_age.html">年齢別医療費支出（詳細版）</a>
-                <div class="item-description">
-                    年齢別医療費支出の詳細な分析を提供するチャートです。より詳細なデータと分析が含まれています。
+                <div class="tile">
+                    <a href="data-visualization/healthspending_by_age.html">年齢別医療費支出（詳細版）</a>
+                    <div class="tile-description">
+                        年齢別医療費支出の詳細な分析を提供するチャートです。より詳細なデータと分析が含まれています。
+                    </div>
+                    <div class="tile-meta">
+                        📊 詳細分析 | 📈 年齢別データ
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="data-visualization/social_spending_aging_chart.html">社会支出と高齢化の関係（詳細版）</a>
-                <div class="item-description">
-                    社会支出/GDP比と高齢者比率の関係を、より多くのOECD諸国のデータで可視化しています。日本の2015年から2022年までの推移と、2022年における他のOECD諸国の位置を比較できます。高齢化と社会支出の相関関係を理解するのに役立ちます。
+                <div class="tile">
+                    <a href="data-visualization/social_spending_aging_chart.html">社会支出と高齢化の関係（詳細版）</a>
+                    <div class="tile-description">
+                        社会支出/GDP比と高齢者比率の関係を、より多くのOECD諸国のデータで可視化しています。日本の2015年から2022年までの推移と、2022年における他のOECD諸国の位置を比較できます。
+                    </div>
+                    <div class="tile-meta">
+                        📊 相関分析 | 🌍 OECD比較
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="data-visualization/sspending_aging_cursor.html">社会支出と高齢化の関係（簡易版）</a>
-                <div class="item-description">
-                    社会支出/GDP比と高齢者比率の関係を、主要なOECD諸国のデータで簡潔に可視化しています。日本の2010年から2022年までの推移と、2022年における主要国の比較を表形式でも確認できます。
+                <div class="tile">
+                    <a href="data-visualization/sspending_aging_cursor.html">社会支出と高齢化の関係（簡易版）</a>
+                    <div class="tile-description">
+                        社会支出/GDP比と高齢者比率の関係を、主要なOECD諸国のデータで簡潔に可視化しています。日本の2010年から2022年までの推移と、2022年における主要国の比較を表形式でも確認できます。
+                    </div>
+                    <div class="tile-meta">
+                        📊 簡易版 | 📋 表形式データ
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="data-visualization/japan_labor_statistics.html">日本の労働統計</a>
-                <div class="item-description">
-                    日本の労働市場に関する統計データの可視化です。雇用状況、賃金、労働時間などの重要な指標をグラフやチャートで表示し、日本の労働環境の現状を理解するのに役立ちます。
+                <div class="tile">
+                    <a href="data-visualization/japan_labor_statistics.html">日本の労働統計</a>
+                    <div class="tile-description">
+                        日本の労働市場に関する統計データの可視化です。雇用状況、賃金、労働時間などの重要な指標をグラフやチャートで表示し、日本の労働環境の現状を理解するのに役立ちます。
+                    </div>
+                    <div class="tile-meta">
+                        📊 労働統計 | 🇯🇵 日本データ
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="games/sokoban-game.html">倉庫番ゲーム</a>
-                <div class="item-description">
-                    古典的なパズルゲーム「倉庫番」の実装です。箱を押して倉庫内を整理するパズルゲームです。矢印キーで移動し、箱を押して目標地点に配置していきます。
+            </div>
+        </div>
+
+        <div class="category-section games">
+            <h2 class="category-title">
+                <span class="category-icon">🎮</span>
+                ゲーム
+            </h2>
+            <div class="tiles-grid">
+                <div class="tile">
+                    <a href="games/sokoban-game.html">倉庫番ゲーム</a>
+                    <div class="tile-description">
+                        古典的なパズルゲーム「倉庫番」の実装です。箱を押して倉庫内を整理するパズルゲームです。矢印キーで移動し、箱を押して目標地点に配置していきます。
+                    </div>
+                    <div class="tile-meta">
+                        🧩 パズルゲーム | ⌨️ 矢印キー操作
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="games/simple_rpg_game.html">シンプルRPGゲーム</a>
-                <div class="item-description">
-                    シンプルなRPGゲームです。キャラクターを操作して冒険を進め、敵と戦いながら成長していくゲームです。
+                <div class="tile">
+                    <a href="games/retro_rpg_game.html">レトロRPGゲーム</a>
+                    <div class="tile-description">
+                        レトロな雰囲気のRPGゲームです。懐かしいグラフィックとゲームシステムで、古典的なRPGの楽しさを体験できます。
+                    </div>
+                    <div class="tile-meta">
+                        🎮 レトロゲーム | 🕹️ クラシック
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="games/retro_rpg_game.html">レトロRPGゲーム</a>
-                <div class="item-description">
-                    レトロな雰囲気のRPGゲームです。懐かしいグラフィックとゲームシステムで、古典的なRPGの楽しさを体験できます。
+                <div class="tile">
+                    <a href="games/oldprg.html">レガシーRPGゲーム</a>
+                    <div class="tile-description">
+                        初期バージョンのRPGゲームです。シンプルなゲームシステムと基本的なRPG要素を備えた、クラシックなゲーム体験を提供します。
+                    </div>
+                    <div class="tile-meta">
+                        🎮 レガシー | 📱 基本要素
+                    </div>
                 </div>
-            </li>
-            <li>
-                <a href="games/oldprg.html">レガシーRPGゲーム</a>
-                <div class="item-description">
-                    初期バージョンのRPGゲームです。シンプルなゲームシステムと基本的なRPG要素を備えた、クラシックなゲーム体験を提供します。
-                </div>
-            </li>
-        </ul>
+            </div>
+        </div>
     </div>
 </body>
 </html> 
