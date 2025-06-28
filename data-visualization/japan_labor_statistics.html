@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本の労働統計推移</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            background: linear-gradient(45deg, #3498db, #2c3e50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin: 30px 0;
+        }
+
+
+        .definitions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .definition-item {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 3px solid #27ae60;
+            background: white;
+            border-radius: 0 5px 5px 0;
+        }
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>日本の労働統計推移</h1>
+        <p class="subtitle">労働力人口・就業者・雇用者の20年間変化（2005-2024年）</p>
+        
+        <div class="definitions">
+            <h3>📊 用語の定義</h3>
+            <div class="definition-item">
+                <strong>労働力人口：</strong>15歳以上で働く意欲のある人々の総数（就業者＋完全失業者）
+            </div>
+            <div class="definition-item">
+                <strong>就業者：</strong>調査期間中に少しでも働いた人々（自営業者、家族従業者、雇用者を含む）
+            </div>
+            <div class="definition-item">
+                <strong>雇用者：</strong>就業者のうち、他人に雇われて働く人々（自営業者や家族従業者は除く）
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="laborChart"></canvas>
+        </div>
+
+
+
+        <div class="note">
+            <strong>注意：</strong>このグラフは総務省統計局の労働力調査を基にした近似データです。正確な最新データについては、統計局の公式サイトをご確認ください。また、調査方法の変更や時系列接続により、実際のデータには若干の調整が含まれる場合があります。
+        </div>
+    </div>
+
+    <script>
+        // 日本の労働統計データ（2005-2024年の近似値）
+        const years = ['2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'];
+        
+        const laborForceData = [6650, 6657, 6669, 6650, 6617, 6632, 6590, 6565, 6577, 6587, 6598, 6648, 6720, 6830, 6886, 6868, 6860, 6902, 6925, 6989];
+        const employedData = [6356, 6382, 6412, 6385, 6314, 6298, 6280, 6280, 6311, 6351, 6401, 6465, 6530, 6664, 6724, 6667, 6667, 6723, 6755, 6796];
+        const employeesData = [5288, 5325, 5371, 5392, 5361, 5370, 5345, 5349, 5395, 5441, 5485, 5515, 5574, 5665, 5729, 5687, 5682, 5729, 5775, 6084];
+
+        const ctx = document.getElementById('laborChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        label: '労働力人口',
+                        data: laborForceData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '就業者',
+                        data: employedData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: '雇用者',
+                        data: employeesData,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '日本の労働統計推移（2005-2024年）',
+                        font: {
+                            size: 18,
+                            family: 'Hiragino Sans'
+                        },
+                        color: '#2c3e50',
+                        padding: 20
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 14,
+                                family: 'Hiragino Sans'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(44, 62, 80, 0.9)',
+                        titleColor: '#ecf0f1',
+                        bodyColor: '#ecf0f1',
+                        borderColor: '#3498db',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + '万人';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '年',
+                            font: {
+                                size: 14,
+                                family: 'Hiragino Sans'
+                            },
+                            color: '#2c3e50'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '人数（万人）',
+                            font: {
+                                size: 14,
+                                family: 'Hiragino Sans'
+                            },
+                            color: '#2c3e50'
+                        },
+                        min: 5000,
+                        max: 7200,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+
+
+
+
+    </script>
+</body>
+</html>
